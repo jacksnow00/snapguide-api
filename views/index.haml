@@ -1,0 +1,13 @@
+!!! 5
+%html
+  %head
+    %meta{charset: 'utf-8'}
+    %title Awesome Image Viewer
+    %link{rel: 'stylesheet', media: 'screen', href: '/application.css'}
+
+  %body
+    %h2 Just do it
+    %p
+      this is a test
+    - @items.each do |item|
+      %p= item
