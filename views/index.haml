@@ -6,8 +6,8 @@
     %link{rel: 'stylesheet', media: 'screen', href: '/application.css'}
 
   %body
-    %h2 Just do it
-    %p
-      this is a test
-    - @items.each do |item|
-      %p= item
+    #main-content
+      %h2 Image Viewer
+    :javascript
+      window.guides = ['#{@guide}'];
+    %script{src:'application.js'}
