@@ -7,7 +7,8 @@
 
   %body
     #main-content
-      %h2 Image Viewer
+      %h2 Guide Viewer
+      = render(:haml, :_guide)
     :javascript
-      window.guides = ['#{@guide}'];
+      window.guides = ['#{@guide_json}'];
     %script{src:'application.js'}

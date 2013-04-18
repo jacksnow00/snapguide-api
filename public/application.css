@@ -1,3 +1,22 @@
 body {
   background: #eee;
 }
+
+.guide {
+  width: 610px;
+  position: relative;
+}
+
+.guide .info {
+  background: white;
+  padding: 15px;
+  position: absolute;
+  bottom: 0;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.guide .info h2 {
+  margin-top: 0;
+  margin-bottom: 0;
+}
