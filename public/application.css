@@ -1,10 +1,109 @@
-body {
-  background: #eee;
+html, body {
+  background: #1abc9c;
+}
+
+.content {
+  margin: 0 30px;
+  width: auto;
+}
+
+.btn {
+  background: #1abc9c;
+  transition: 0.25s;
+}
+
+.btn:hover {
+  background: #2fe2bf;
+}
+
+.btn:focus {
+  background: #5dade2;
+}
+
+#find-guide {
+  background: #212121;
+  padding: 15px 0;
+  color: white;
+  overflow: hidden;
+}
+
+#find-guide .content {
+  width: 400px;
+  margin: 0 auto;
+}
+
+#find-guide .find {
+  font-size: 18px;
+  margin-top: 15px;
+}
+
+#guide-form input {
+  display: block;
+  float: left;
+  margin-bottom: 15px;
+  margin-right: 10px;
+  border-radius: 6px;
+  border: none;
+  padding: 10px 8px;
+}
+
+#guide-form input[type=submit] {
+  color: white;
+}
+
+.guides-wrap {
+  margin: 0 auto;
+  width: 610px;
+}
+
+#guides {
+  margin-top: 10px;
 }
 
 .guide {
+  overflow: hidden;
+  margin-bottom: 20px;
   width: 610px;
+  height: 340px;
+  background: white;
   position: relative;
+  border-radius: 10px;
+  opacity: 1;
+  transition: opacity 1s;
+}
+
+.guide.fade-out {
+  opacity: 0;
+}
+
+.guide > p {
+  margin-top: 0;
+}
+
+.guide .summary {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.guide .icon-spinner {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  font-size: 2em;
+}
+
+.guide .start-guide {
+  display: inline-block;
+  position: absolute;
+  background: #c84c18;
+  padding: 15px;
+  top: 32%;
+  right: -10px;
+  border-radius: 5px;
+  color: white;
+  text-decoration: none;
+  font-size: 24px;
 }
 
 .guide .info {
@@ -19,4 +118,10 @@ body {
 .guide .info h2 {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.icon-spinner {
+  display: inline-block;
+  -webkit-animation: spin 2s infinite linear;
+  animation: spin 2s infinite linear;
 }

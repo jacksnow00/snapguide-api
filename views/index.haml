@@ -3,12 +3,22 @@
   %head
     %meta{charset: 'utf-8'}
     %title Awesome Image Viewer
+    %link{rel: 'stylesheet', media: 'screen', href: '/normalize.css'}
+    %link{rel: 'stylesheet', media: 'screen', href: '/font-awesome.min.css'}
     %link{rel: 'stylesheet', media: 'screen', href: '/application.css'}
 
   %body
     #main-content
-      %h2 Guide Viewer
-      = render(:haml, :_guide)
-    :javascript
-      window.guides = ['#{@guide_json}'];
+      #find-guide
+        .content
+          %p.find Find a guide:
+          %ul
+            %li b995492d5e7943e3b2757a88fe3ef7c6
+            %li 0bed6fee853b4f4e966cec0f1210079d
+          %form{action: 'get_guide', method: :get, id: 'guide-form'}
+            %input{autofocus: true, id: 'guide-uuid', type:'text', placeholder: "Guide uuid ..."}
+            %input.btn{type:'submit', value: 'Find Guide'}
+
+      .guides-wrap
+        #guides
     %script{src:'application.js'}

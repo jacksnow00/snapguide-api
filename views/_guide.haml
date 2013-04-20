@@ -1,8 +1,7 @@
-.guide
-  %p
-    %img{src:@guide.main_image_url}
-  .info
-    %h2 How to #{@guide.title}
-    %p= @guide.summary
-    %p by #{@guide.author}
-  %a{href:'#'} Start the guide
+%p
+  %img{src:@guide.main_image_url}
+.info
+  %h2 How to #{@guide.title}
+  %p.summary= @guide.summary
+  %p by #{@guide.author}
+%a.start-guide{href:'#'} Start the guide
