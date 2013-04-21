@@ -138,7 +138,8 @@
 
         uuid = this.parentNode.getAttribute('data-uuid');
         guideSlideshow = new GuideSlideshow(window.guides[uuid]);
-        return guideSlideshow.start();
+        guideSlideshow.start();
+        return false;
       };
     };
 

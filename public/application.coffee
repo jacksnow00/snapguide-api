@@ -85,6 +85,7 @@ class GuideFetcher
       uuid = this.parentNode.getAttribute('data-uuid')
       guideSlideshow = new GuideSlideshow window.guides[uuid]
       guideSlideshow.start()
+      false
 
   storeGuide = (guide) ->
     unless window.guides.hasOwnProperty(uuid)

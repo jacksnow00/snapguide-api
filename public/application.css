@@ -173,7 +173,7 @@ html, body {
   position: fixed;
   width: 100%;
   height: 100%;
-  background: gray;
+  background: black;
   top: 0;
   opacity: .5;
   cursor: pointer;
@@ -183,17 +183,41 @@ html, body {
   display: none;
 }
 
+#guide-viewer {
+  position: absolute;
+  top: 145px;
+  left: 31%;
+}
+
 #guide-viewer .content-wrap {
-  position: relative;
-  width: 800px;
-  height: 530px;
+  overflow: hidden;
+  background: white;
+  border-radius: 8px;
+  width: 440px;
+  height: 460px;
+}
+
+#guide-viewer .content-wrap img {
+  display: block;
+}
+
+#guide-viewer .instructions {
+  margin: 0;
+  padding: 6px 19px;
+  font-size: 20px;
+  line-height: 27px;
+}
+
+#guide-viewer .instructions.chars-125 {
+  font-size: 16px;
+  line-height: 20px;
 }
 
 #guide-viewer .previous {
-  left: 0;
+  left: -75px;
 }
 #guide-viewer .next {
-  right: 0;
+  right: -75px;
 }
 #guide-viewer .previous,
 #guide-viewer .next {
@@ -201,7 +225,7 @@ html, body {
   color: white;
   position: absolute;
   font-size: 3em;
-  top: 100px;
+  top: 200px;
 }
 #guide-viewer .previous:hover,
 #guide-viewer .next:hover {
