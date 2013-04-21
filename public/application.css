@@ -71,6 +71,10 @@ html, body {
   transition: opacity 1s;
 }
 
+.guide.template {
+  display: none;
+}
+
 .guide img {
   border-radius: 10px;
 }
