@@ -51,14 +51,14 @@ class GuideFetcher
 
   setupGuide = (guide) ->
     copyTemplateGuide()
-    setGuideContent()
+    setGuideContent(guide)
 
   copyTemplateGuide = ->
     templateGuide = document.getElementById("guides").getElementsByClassName('guide template')[0]
     newGuide = templateGuide.outerHTML
     guides.insertAdjacentHTML('afterbegin', newGuide)
 
-  setGuideContent = ->
+  setGuideContent = (guide) ->
     newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0]
     newGuideNode.setAttribute 'data-uuid', guide.uuid
     for attr in ['title', 'summary', 'author']
@@ -102,9 +102,18 @@ class Guide
 
 class GuideSlideshow
   constructor: (@guide) ->
+    @overlay = document.getElementById 'guide-overlay'
+    @viewer = document.getElementById 'guide-viewer'
 
   start: ->
-    alert 'starting'
+    @overlay.classList.remove 'hidden'
+    @overlay.onclick = =>
+      hideSlideShow(this)
+    @viewer.classList.remove 'hidden'
+
+  hideSlideShow = (show) ->
+    show.overlay.classList.add 'hidden'
+    show.viewer.classList.add 'hidden'
 
 window.onload = ->
   GuideFetcher.init()

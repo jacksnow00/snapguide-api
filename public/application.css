@@ -150,3 +150,42 @@ html, body {
   -webkit-animation: spin 2s infinite linear;
   animation: spin 2s infinite linear;
 }
+
+#guide-overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: gray;
+  top: 0;
+  opacity: .5;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none;
+}
+
+#guide-viewer .content-wrap {
+  position: relative;
+  width: 800px;
+  height: 530px;
+}
+
+#guide-viewer .previous {
+  left: 0;
+}
+#guide-viewer .next {
+  right: 0;
+}
+#guide-viewer .previous,
+#guide-viewer .next {
+  text-decoration: none;
+  color: white;
+  position: absolute;
+  font-size: 3em;
+  top: 100px;
+}
+#guide-viewer .previous:hover,
+#guide-viewer .next:hover {
+  color: #ccc;
+}

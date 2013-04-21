@@ -84,7 +84,7 @@
 
     setupGuide = function(guide) {
       copyTemplateGuide();
-      return setGuideContent();
+      return setGuideContent(guide);
     };
 
     copyTemplateGuide = function() {
@@ -95,7 +95,7 @@
       return guides.insertAdjacentHTML('afterbegin', newGuide);
     };
 
-    setGuideContent = function() {
+    setGuideContent = function(guide) {
       var attr, img, newGuideNode, _i, _len, _ref;
 
       newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0];
@@ -179,12 +179,27 @@
   })();
 
   GuideSlideshow = (function() {
+    var hideSlideShow;
+
     function GuideSlideshow(guide) {
       this.guide = guide;
+      this.overlay = document.getElementById('guide-overlay');
+      this.viewer = document.getElementById('guide-viewer');
     }
 
     GuideSlideshow.prototype.start = function() {
-      return alert('starting');
+      var _this = this;
+
+      this.overlay.classList.remove('hidden');
+      this.overlay.onclick = function() {
+        return hideSlideShow(_this);
+      };
+      return this.viewer.classList.remove('hidden');
+    };
+
+    hideSlideShow = function(show) {
+      show.overlay.classList.add('hidden');
+      return show.viewer.classList.add('hidden');
     };
 
     return GuideSlideshow;
