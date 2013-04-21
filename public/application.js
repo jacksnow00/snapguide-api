@@ -1,8 +1,8 @@
 (function() {
-  var GuideFetcher;
+  var Guide, GuideFetcher, GuideSlideshow, Image;
 
   GuideFetcher = (function() {
-    var appendGuide, bindEvents, fetchGuide, handleSubmit, parseResponse, removeLoading, setHeaders, setupCallbacks, showSpinner;
+    var bindEvents, copyTemplateGuide, fetchGuide, handleSubmit, parseResponse, removeLoading, setContent, setGuideContent, setHeaders, setupCallbacks, setupGuide, showLoading, storeGuide;
 
     function GuideFetcher() {}
 
@@ -36,7 +36,7 @@
     };
 
     setHeaders = function() {
-      this.xhr.setRequestHeader('Accept', 'text/html, application/xhtml+xml, application/xml');
+      this.xhr.setRequestHeader('Accept', 'application/json, text/javascript');
       return this.xhr.setRequestHeader('X-XHR-Referer', document.location.href);
     };
 
@@ -44,7 +44,7 @@
       var _this = this;
 
       this.xhr.onloadstart = function() {
-        return showSpinner();
+        return showLoading();
       };
       this.xhr.onload = function() {
         return parseResponse();
@@ -54,18 +54,17 @@
       };
     };
 
-    showSpinner = function() {
-      var guideDiv, main_content;
-
-      main_content = document.getElementById("guides");
-      guideDiv = "<div class=\"guide\" data-uuid=\"" + this.uuid + "\"><i class=\"icon-spinner\"></i></div>";
-      return main_content.insertAdjacentHTML('afterbegin', guideDiv);
-    };
+    showLoading = function() {};
 
     parseResponse = function() {
+      var guide, json;
+
       if (this.xhr.status === 200) {
-        appendGuide(this.xhr.response);
-        return bindEvents();
+        json = JSON.parse(this.xhr.response);
+        guide = new Guide(json);
+        setupGuide(guide);
+        bindEvents();
+        return storeGuide(guide);
       } else if (this.xhr.status === 404) {
         return removeLoading();
       }
@@ -83,11 +82,36 @@
       }), 1000);
     };
 
-    appendGuide = function(guideHtml) {
-      var loadingGuide;
+    setupGuide = function(guide) {
+      copyTemplateGuide();
+      return setGuideContent();
+    };
 
-      loadingGuide = document.getElementById("guides").firstChild;
-      return loadingGuide.innerHTML = guideHtml;
+    copyTemplateGuide = function() {
+      var newGuide, templateGuide;
+
+      templateGuide = document.getElementById("guides").getElementsByClassName('guide template')[0];
+      newGuide = templateGuide.outerHTML;
+      return guides.insertAdjacentHTML('afterbegin', newGuide);
+    };
+
+    setGuideContent = function() {
+      var attr, img, newGuideNode, _i, _len, _ref;
+
+      newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0];
+      newGuideNode.setAttribute('data-uuid', guide.uuid);
+      _ref = ['title', 'summary', 'author'];
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        attr = _ref[_i];
+        setContent(newGuideNode, attr, guide[attr]);
+      }
+      img = newGuideNode.getElementsByTagName('img')[0];
+      img.setAttribute('src', guide.mainImage.size('featured'));
+      return newGuideNode.classList.remove('template');
+    };
+
+    setContent = function(node, className, text) {
+      return node.getElementsByClassName(className)[0].innerText = text;
     };
 
     bindEvents = function() {
@@ -95,11 +119,75 @@
 
       startGuide = document.getElementsByClassName('start-guide')[0];
       return startGuide.onclick = function() {
-        return alert(this.parentNode.getAttribute('data-uuid'));
+        var guideSlideshow, uuid;
+
+        uuid = this.parentNode.getAttribute('data-uuid');
+        guideSlideshow = new GuideSlideshow(window.guides[uuid]);
+        return guideSlideshow.start();
       };
     };
 
+    storeGuide = function(guide) {
+      return Object.defineProperty(window.guides, guide.uuid, {
+        value: guide
+      });
+    };
+
     return GuideFetcher;
+
+  })();
+
+  Image = (function() {
+    function Image(uuid) {
+      this.uuid = uuid;
+    }
+
+    Image.prototype.size = function(size) {
+      var imageSize, url;
+
+      url = "http://images.snapguide.com/images/guide/" + this.uuid + "/original.jpg";
+      imageSize = (function() {
+        switch (false) {
+          case size !== 'thumb':
+            return '60x60_ac';
+          case size !== 'small':
+            return '300x294_ac';
+          case size !== 'medium':
+            return '580x296_ac';
+          case size !== 'featured':
+            return '610x340_ac';
+        }
+      })();
+      return url.replace(/original/, imageSize);
+    };
+
+    return Image;
+
+  })();
+
+  Guide = (function() {
+    function Guide(guide) {
+      this.uuid = guide.uuid;
+      this.title = guide.metadata.title;
+      this.summary = guide.metadata.summary;
+      this.author = guide.author.name;
+      this.mainImage = new Image(guide.publish_main_image_uuid);
+    }
+
+    return Guide;
+
+  })();
+
+  GuideSlideshow = (function() {
+    function GuideSlideshow(guide) {
+      this.guide = guide;
+    }
+
+    GuideSlideshow.prototype.start = function() {
+      return alert('starting');
+    };
+
+    return GuideSlideshow;
 
   })();
 

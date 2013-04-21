@@ -21,23 +21,24 @@ class GuideFetcher
 
   setHeaders = ->
     @xhr.setRequestHeader 'Accept',
-      'text/html, application/xhtml+xml, application/xml'
+      'application/json, text/javascript'
     @xhr.setRequestHeader 'X-XHR-Referer', document.location.href
 
   setupCallbacks = ->
-    @xhr.onloadstart = => showSpinner()
+    @xhr.onloadstart = => showLoading()
     @xhr.onload = => parseResponse()
     @xhr.onloadend = -> @xhr = null
 
-  showSpinner = ->
-    main_content = document.getElementById("guides")
-    guideDiv = "<div class=\"guide\" data-uuid=\"#{@uuid}\"><i class=\"icon-spinner\"></i></div>"
-    main_content.insertAdjacentHTML('afterbegin', guideDiv)
+  showLoading = ->
+    # stub
 
   parseResponse = ->
     if @xhr.status == 200
-      appendGuide @xhr.response
+      json = JSON.parse(@xhr.response)
+      guide = new Guide json
+      setupGuide(guide)
       bindEvents()
+      storeGuide(guide)
     else if @xhr.status == 404
       removeLoading()
 
@@ -48,42 +49,62 @@ class GuideFetcher
     loadingGuide.classList.add('fade-out')
     setTimeout (-> guides.removeChild(loadingGuide)), 1000
 
-  appendGuide = (guideHtml) ->
-    loadingGuide = document.getElementById("guides").firstChild
-    loadingGuide.innerHTML = guideHtml
+  setupGuide = (guide) ->
+    copyTemplateGuide()
+    setGuideContent()
+
+  copyTemplateGuide = ->
+    templateGuide = document.getElementById("guides").getElementsByClassName('guide template')[0]
+    newGuide = templateGuide.outerHTML
+    guides.insertAdjacentHTML('afterbegin', newGuide)
+
+  setGuideContent = ->
+    newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0]
+    newGuideNode.setAttribute 'data-uuid', guide.uuid
+    for attr in ['title', 'summary', 'author']
+      setContent(newGuideNode, attr, guide[attr])
+    img = newGuideNode.getElementsByTagName('img')[0]
+    img.setAttribute 'src', guide.mainImage.size('featured')
+    newGuideNode.classList.remove('template')
+
+  setContent = (node, className, text) ->
+    node.getElementsByClassName(className)[0].innerText = text
 
   bindEvents = ->
     startGuide = document.getElementsByClassName('start-guide')[0]
     startGuide.onclick = ->
-      alert this.parentNode.getAttribute('data-uuid')
+      uuid = this.parentNode.getAttribute('data-uuid')
+      guideSlideshow = new GuideSlideshow window.guides[uuid]
+      guideSlideshow.start()
+
+  storeGuide = (guide) ->
+    Object.defineProperty(window.guides, guide.uuid, {value: guide})
+
+class Image
+  constructor: (@uuid) ->
+
+  size: (size) ->
+    url = "http://images.snapguide.com/images/guide/#{@uuid}/original.jpg"
+    imageSize = switch
+      when size == 'thumb'    then '60x60_ac'
+      when size == 'small'    then '300x294_ac'
+      when size == 'medium'   then '580x296_ac'
+      when size == 'featured' then '610x340_ac'
+    url.replace(/original/, imageSize)
+
+class Guide
+  constructor: (guide) ->
+    @uuid = guide.uuid
+    @title = guide.metadata.title
+    @summary = guide.metadata.summary
+    @author = guide.author.name
+    @mainImage = new Image guide.publish_main_image_uuid
+
+class GuideSlideshow
+  constructor: (@guide) ->
+
+  start: ->
+    alert 'starting'
 
 window.onload = ->
   GuideFetcher.init()
-
-
-
-
-
-
-
-#class GuideController
-#
-#
-#class Guide
-#  constructor: (@guide) ->
-#
-#  media: ->
-#    @guide.media
-
-#guide_one = new Guide(JSON.parse(window.guides[0]))
-#media = guide_one.media()
-#
-#for key of media
-#  break
-#  type = media[key].type
-#  if type.match /image/
-#    url = media[key].url
-#    url = url.replace('original', '300x294_ac')
-#    new_image = "<img src=\"#{url}\"/>"
-#    main_content = document.getElementById("main-content")
-#    main_content.insertAdjacentHTML('afterend', new_image)
