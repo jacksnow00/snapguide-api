@@ -61,15 +61,18 @@ html, body {
 }
 
 .guide {
-  overflow: hidden;
   margin-bottom: 20px;
   width: 610px;
   height: 340px;
+  border-radius: 10px;
   background: white;
   position: relative;
-  border-radius: 10px;
   opacity: 1;
   transition: opacity 1s;
+}
+
+.guide img {
+  border-radius: 10px;
 }
 
 .guide.fade-out {
@@ -94,16 +97,32 @@ html, body {
 }
 
 .guide .start-guide {
-  display: inline-block;
+  display: block;
   position: absolute;
-  background: #c84c18;
-  padding: 15px;
   top: 32%;
   right: -10px;
+}
+
+.guide .start-guide .btn {
+  background: #f4d03f;
+  position: relative;
+  padding: 15px;
   border-radius: 5px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   color: white;
   text-decoration: none;
   font-size: 24px;
+}
+
+.guide .start-guide .btn:after {
+  position: absolute;
+  content: '';
+  display: block;
+  border-top: 10px solid rgb(155, 127, 16);
+  border-right: 10px solid transparent;
+  right: 0;
+  bottom: -10px;
 }
 
 .guide .info {
@@ -113,6 +132,8 @@ html, body {
   bottom: 0;
   box-sizing: border-box;
   width: 100%;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 .guide .info h2 {

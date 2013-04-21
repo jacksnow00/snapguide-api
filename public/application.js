@@ -2,7 +2,7 @@
   var GuideFetcher;
 
   GuideFetcher = (function() {
-    var appendGuide, fetchGuide, handleSubmit, parseResponse, removeLoading, setHeaders, setupCallbacks, showSpinner;
+    var appendGuide, bindEvents, fetchGuide, handleSubmit, parseResponse, removeLoading, setHeaders, setupCallbacks, showSpinner;
 
     function GuideFetcher() {}
 
@@ -21,12 +21,12 @@
     };
 
     fetchGuide = function() {
-      var url, uuid, _ref;
+      var url, _ref;
 
       if ((_ref = this.xhr) != null) {
         _ref.abort();
       }
-      uuid = document.getElementById('guide-uuid').value;
+      this.uuid = document.getElementById('guide-uuid').value;
       this.xhr = new XMLHttpRequest;
       url = "/get_guide?uuid=" + uuid;
       this.xhr.open('GET', url, true);
@@ -58,13 +58,14 @@
       var guideDiv, main_content;
 
       main_content = document.getElementById("guides");
-      guideDiv = '<div class="guide"><i class="icon-spinner"></i></div>';
+      guideDiv = "<div class=\"guide\" data-uuid=\"" + this.uuid + "\"><i class=\"icon-spinner\"></i></div>";
       return main_content.insertAdjacentHTML('afterbegin', guideDiv);
     };
 
     parseResponse = function() {
       if (this.xhr.status === 200) {
-        return appendGuide(this.xhr.response);
+        appendGuide(this.xhr.response);
+        return bindEvents();
       } else if (this.xhr.status === 404) {
         return removeLoading();
       }
@@ -79,7 +80,7 @@
       loadingGuide.classList.add('fade-out');
       return setTimeout((function() {
         return guides.removeChild(loadingGuide);
-      }), 2000);
+      }), 1000);
     };
 
     appendGuide = function(guideHtml) {
@@ -87,6 +88,15 @@
 
       loadingGuide = document.getElementById("guides").firstChild;
       return loadingGuide.innerHTML = guideHtml;
+    };
+
+    bindEvents = function() {
+      var startGuide;
+
+      startGuide = document.getElementsByClassName('start-guide')[0];
+      return startGuide.onclick = function() {
+        return alert(this.parentNode.getAttribute('data-uuid'));
+      };
     };
 
     return GuideFetcher;

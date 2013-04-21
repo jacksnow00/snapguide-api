@@ -4,14 +4,13 @@ class Guide
   def initialize(json)
     @title = json["metadata"]["title"]
     @summary = json["metadata"]["summary"]
-    @first_name = json["author"]["first_name"]
-    @last_name = json["author"]["last_name"]
+    @name = json["author"]["name"]
     @main_image_id = json["metadata"]["main_image_uuid"]
     @media_hash = json["media"]
   end
 
   def author
-    "#{@first_name} #{@last_name}"
+    @name
   end
 
   def main_image_url

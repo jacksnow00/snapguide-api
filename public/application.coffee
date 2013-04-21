@@ -10,7 +10,7 @@ class GuideFetcher
 
   fetchGuide = ->
     @xhr?.abort()
-    uuid = document.getElementById('guide-uuid').value
+    @uuid = document.getElementById('guide-uuid').value
     @xhr = new XMLHttpRequest
     url = "/get_guide?uuid=#{uuid}"
 
@@ -31,12 +31,13 @@ class GuideFetcher
 
   showSpinner = ->
     main_content = document.getElementById("guides")
-    guideDiv = '<div class="guide"><i class="icon-spinner"></i></div>'
+    guideDiv = "<div class=\"guide\" data-uuid=\"#{@uuid}\"><i class=\"icon-spinner\"></i></div>"
     main_content.insertAdjacentHTML('afterbegin', guideDiv)
 
   parseResponse = ->
     if @xhr.status == 200
       appendGuide @xhr.response
+      bindEvents()
     else if @xhr.status == 404
       removeLoading()
 
@@ -45,11 +46,16 @@ class GuideFetcher
     guides = document.getElementById("guides")
     loadingGuide = guides.firstChild
     loadingGuide.classList.add('fade-out')
-    setTimeout (-> guides.removeChild(loadingGuide)), 2000
+    setTimeout (-> guides.removeChild(loadingGuide)), 1000
 
   appendGuide = (guideHtml) ->
     loadingGuide = document.getElementById("guides").firstChild
     loadingGuide.innerHTML = guideHtml
+
+  bindEvents = ->
+    startGuide = document.getElementsByClassName('start-guide')[0]
+    startGuide.onclick = ->
+      alert this.parentNode.getAttribute('data-uuid')
 
 window.onload = ->
   GuideFetcher.init()
