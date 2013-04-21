@@ -2,7 +2,7 @@
   var Guide, GuideFetcher, GuideSlideshow, Image;
 
   GuideFetcher = (function() {
-    var bindEvents, copyTemplateGuide, fetchGuide, handleSubmit, parseResponse, removeLoading, setContent, setGuideContent, setHeaders, setupCallbacks, setupGuide, showLoading, storeGuide;
+    var bindEvents, copyTemplateGuide, fetchGuide, handleResponse, handleSubmit, parseResponse, removeLoading, removeLoadingGuide, setContent, setGuideContent, setHeaders, setupCallbacks, setupGuide, showLoading, storeGuide;
 
     function GuideFetcher() {}
 
@@ -47,14 +47,29 @@
         return showLoading();
       };
       this.xhr.onload = function() {
-        return parseResponse();
+        return handleResponse();
       };
       return this.xhr.onloadend = function() {
         return this.xhr = null;
       };
     };
 
-    showLoading = function() {};
+    showLoading = function() {
+      var findGuide;
+
+      findGuide = document.getElementById("find-guide");
+      this.loading = findGuide.getElementsByClassName('loading')[0];
+      return this.loading.classList.remove('hidden');
+    };
+
+    handleResponse = function() {
+      parseResponse();
+      return removeLoading();
+    };
+
+    removeLoading = function() {
+      return this.loading.classList.add('hidden');
+    };
 
     parseResponse = function() {
       var guide, json;
@@ -66,14 +81,14 @@
         bindEvents();
         return storeGuide(guide);
       } else if (this.xhr.status === 404) {
-        return removeLoading();
+        alert('Sorry, something went wrong');
+        return removeLoadingGuide();
       }
     };
 
-    removeLoading = function() {
+    removeLoadingGuide = function() {
       var guides, loadingGuide;
 
-      alert('Sorry, something went wrong');
       guides = document.getElementById("guides");
       loadingGuide = guides.firstChild;
       loadingGuide.classList.add('fade-out');
@@ -128,9 +143,11 @@
     };
 
     storeGuide = function(guide) {
-      return Object.defineProperty(window.guides, guide.uuid, {
-        value: guide
-      });
+      if (!window.guides.hasOwnProperty(uuid)) {
+        return Object.defineProperty(window.guides, guide.uuid, {
+          value: guide
+        });
+      }
     };
 
     return GuideFetcher;

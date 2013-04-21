@@ -26,11 +26,20 @@ class GuideFetcher
 
   setupCallbacks = ->
     @xhr.onloadstart = => showLoading()
-    @xhr.onload = => parseResponse()
+    @xhr.onload = => handleResponse()
     @xhr.onloadend = -> @xhr = null
 
   showLoading = ->
-    # stub
+    findGuide = document.getElementById("find-guide")
+    @loading = findGuide.getElementsByClassName('loading')[0]
+    @loading.classList.remove 'hidden'
+
+  handleResponse = ->
+    parseResponse()
+    removeLoading()
+
+  removeLoading = ->
+    @loading.classList.add 'hidden'
 
   parseResponse = ->
     if @xhr.status == 200
@@ -40,10 +49,10 @@ class GuideFetcher
       bindEvents()
       storeGuide(guide)
     else if @xhr.status == 404
-      removeLoading()
+      alert 'Sorry, something went wrong'
+      removeLoadingGuide()
 
-  removeLoading = ->
-    alert 'Sorry, something went wrong'
+  removeLoadingGuide = ->
     guides = document.getElementById("guides")
     loadingGuide = guides.firstChild
     loadingGuide.classList.add('fade-out')
@@ -78,7 +87,8 @@ class GuideFetcher
       guideSlideshow.start()
 
   storeGuide = (guide) ->
-    Object.defineProperty(window.guides, guide.uuid, {value: guide})
+    unless window.guides.hasOwnProperty(uuid)
+      Object.defineProperty(window.guides, guide.uuid, {value: guide})
 
 class Image
   constructor: (@uuid) ->
