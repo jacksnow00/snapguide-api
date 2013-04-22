@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'json'
 
 class Application < Sinatra::Base
   get '/' do
