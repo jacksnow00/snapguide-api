@@ -1,95 +1,97 @@
 class GuideFetcher
-  this.init = ->
-    handleSubmit()
+  constructor: ->
+    @xhr = null
+    @findGuide = document.getElementById("find-guide")
+    @loading = @findGuide.getElementsByClassName('loading')[0]
+    @guideTemplate = @guides().getElementsByClassName('guide template')[0]
 
-  handleSubmit = ->
+  @.init = ->
+    (new GuideFetcher).handleSubmit()
+
+  uuid: ->
+    document.getElementById('guide-uuid').value
+
+  guides: ->
+    document.getElementById("guides")
+
+  handleSubmit: ->
     guide_form = document.getElementById('guide-form')
-    guide_form.onsubmit = ->
-      fetchGuide()
-      false
+    guide_form.onsubmit = (e) =>
+      e.preventDefault()
+      @.fetchGuide()
 
-  fetchGuide = ->
+  fetchGuide: ->
     @xhr?.abort()
-    @uuid = document.getElementById('guide-uuid').value
     @xhr = new XMLHttpRequest
-    url = "/get_guide?uuid=#{uuid}"
+    url = "/get_guide?uuid=#{@uuid()}"
 
     @xhr.open 'GET', url, true
-    setHeaders()
-    setupCallbacks()
+    @.setHeaders()
+    @.setupCallbacks()
     @xhr.send()
 
-  setHeaders = ->
+  setHeaders: ->
     @xhr.setRequestHeader 'Accept',
       'application/json, text/javascript'
     @xhr.setRequestHeader 'X-XHR-Referer', document.location.href
 
-  setupCallbacks = ->
-    @xhr.onloadstart = => showLoading()
-    @xhr.onload = => handleResponse()
+  setupCallbacks: ->
+    @xhr.onloadstart = => @.showLoading()
+    @xhr.onload = => @.handleResponse()
     @xhr.onloadend = -> @xhr = null
 
-  showLoading = ->
-    findGuide = document.getElementById("find-guide")
-    @loading = findGuide.getElementsByClassName('loading')[0]
+  showLoading: ->
     @loading.removeClass 'hidden'
 
-  handleResponse = ->
-    parseResponse()
-    removeLoading()
+  handleResponse: ->
+    @.parseResponse()
+    @.removeLoading()
 
-  removeLoading = ->
+  removeLoading: ->
     @loading.addClass 'hidden'
 
-  parseResponse = ->
+  parseResponse: ->
     if @xhr.status == 200
       json = JSON.parse(@xhr.response)
       guide = new Guide json
-      setupGuide(guide)
-      bindEvents()
-      storeGuide(guide)
+      @.setupGuide(guide)
+      @.bindEvents()
+      @.storeGuide(guide)
     else if @xhr.status == 404
       alert 'Sorry, something went wrong'
-      removeLoadingGuide()
 
-  removeLoadingGuide = ->
-    guides = document.getElementById("guides")
-    loadingGuide = guides.firstChild
-    loadingGuide.addClass('fade-out')
-    setTimeout (-> guides.removeChild(loadingGuide)), 1000
+  setupGuide: (guide) ->
+    @.copyTemplateGuide()
+    @.setGuideContent(guide)
 
-  setupGuide = (guide) ->
-    copyTemplateGuide()
-    setGuideContent(guide)
+  copyTemplateGuide: ->
+    newGuide = @guideTemplate.outerHTML
+    @guides().insertAdjacentHTML('afterbegin', newGuide)
 
-  copyTemplateGuide = ->
-    templateGuide = document.getElementById("guides").getElementsByClassName('guide template')[0]
-    newGuide = templateGuide.outerHTML
-    guides.insertAdjacentHTML('afterbegin', newGuide)
-
-  setGuideContent = (guide) ->
-    newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0]
-    newGuideNode.setAttribute 'data-uuid', guide.uuid
-    for attr in ['title', 'summary', 'author']
-      setContent(newGuideNode, attr, guide[attr])
-    img = newGuideNode.getElementsByTagName('img')[0]
+  setGuideContent: (guide) ->
+    newGuide = @guides().getElementsByClassName('guide template')[0]
+    newGuide.setAttribute 'data-uuid', @uuid()
+    @.setContent(newGuide, 'summary', guide.summary)
+    @.setContent(newGuide, 'title', guide.title())
+    @.setContent(newGuide, 'author', "by #{guide['author']}")
+    img = newGuide.getElementsByTagName('img')[0]
     img.setAttribute 'src', guide.mainImage size: 'featured'
-    newGuideNode.removeClass('template')
+    newGuide.removeClass('template')
 
-  setContent = (node, className, text) ->
+  setContent: (node, className, text) ->
     node.getElementsByClassName(className)[0].innerText = text
 
-  bindEvents = ->
+  bindEvents: ->
     startGuide = document.getElementsByClassName('start-guide')[0]
-    startGuide.onclick = ->
-      uuid = this.parentNode.getAttribute('data-uuid')
+    startGuide.onclick = (e) ->
+      e.preventDefault()
+      uuid = @.parentNode.getAttribute('data-uuid')
       guideViewer = new GuideViewer window.guides[uuid]
       guideViewer.start()
-      false
 
-  storeGuide = (guide) ->
-    unless window.guides.hasOwnProperty(uuid)
-      Object.defineProperty(window.guides, guide.uuid, {value: guide})
+  storeGuide: (guide) ->
+    unless window.guides.hasOwnProperty(@uuid())
+      Object.defineProperty(window.guides, @uuid(), {value: guide})
 
 class Image
   constructor: (@uuid) ->
@@ -107,9 +109,11 @@ class Image
 class Guide
   constructor: (@json) ->
     @uuid = @json.uuid
-    @title = @json.metadata.title
     @summary = @json.metadata.summary
     @author = @json.author.name
+
+  title: =>
+    "How to #{@json.metadata.title}"
 
   mainImage: (opts) ->
     (new Image @json.publish_main_image_uuid).size(opts.size)
@@ -173,6 +177,8 @@ class GuideViewer
 
   updateStepNumber: =>
     @stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
+    if @.onFirstStep()
+      @stepNumber.setAttribute('style', "")
     if @.percentDone() > 12
       roundedPercent = Math.round(@.percentDone())
       @stepNumber.setAttribute('style', "width: #{roundedPercent}%;")

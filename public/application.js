@@ -3,152 +3,144 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   GuideFetcher = (function() {
-    var bindEvents, copyTemplateGuide, fetchGuide, handleResponse, handleSubmit, parseResponse, removeLoading, removeLoadingGuide, setContent, setGuideContent, setHeaders, setupCallbacks, setupGuide, showLoading, storeGuide;
-
-    function GuideFetcher() {}
+    function GuideFetcher() {
+      this.xhr = null;
+      this.findGuide = document.getElementById("find-guide");
+      this.loading = this.findGuide.getElementsByClassName('loading')[0];
+      this.guideTemplate = this.guides().getElementsByClassName('guide template')[0];
+    }
 
     GuideFetcher.init = function() {
-      return handleSubmit();
+      return (new GuideFetcher).handleSubmit();
     };
 
-    handleSubmit = function() {
-      var guide_form;
+    GuideFetcher.prototype.uuid = function() {
+      return document.getElementById('guide-uuid').value;
+    };
+
+    GuideFetcher.prototype.guides = function() {
+      return document.getElementById("guides");
+    };
+
+    GuideFetcher.prototype.handleSubmit = function() {
+      var guide_form,
+        _this = this;
 
       guide_form = document.getElementById('guide-form');
-      return guide_form.onsubmit = function() {
-        fetchGuide();
-        return false;
+      return guide_form.onsubmit = function(e) {
+        e.preventDefault();
+        return _this.fetchGuide();
       };
     };
 
-    fetchGuide = function() {
+    GuideFetcher.prototype.fetchGuide = function() {
       var url, _ref;
 
       if ((_ref = this.xhr) != null) {
         _ref.abort();
       }
-      this.uuid = document.getElementById('guide-uuid').value;
       this.xhr = new XMLHttpRequest;
-      url = "/get_guide?uuid=" + uuid;
+      url = "/get_guide?uuid=" + (this.uuid());
       this.xhr.open('GET', url, true);
-      setHeaders();
-      setupCallbacks();
+      this.setHeaders();
+      this.setupCallbacks();
       return this.xhr.send();
     };
 
-    setHeaders = function() {
+    GuideFetcher.prototype.setHeaders = function() {
       this.xhr.setRequestHeader('Accept', 'application/json, text/javascript');
       return this.xhr.setRequestHeader('X-XHR-Referer', document.location.href);
     };
 
-    setupCallbacks = function() {
+    GuideFetcher.prototype.setupCallbacks = function() {
       var _this = this;
 
       this.xhr.onloadstart = function() {
-        return showLoading();
+        return _this.showLoading();
       };
       this.xhr.onload = function() {
-        return handleResponse();
+        return _this.handleResponse();
       };
       return this.xhr.onloadend = function() {
         return this.xhr = null;
       };
     };
 
-    showLoading = function() {
-      var findGuide;
-
-      findGuide = document.getElementById("find-guide");
-      this.loading = findGuide.getElementsByClassName('loading')[0];
+    GuideFetcher.prototype.showLoading = function() {
       return this.loading.removeClass('hidden');
     };
 
-    handleResponse = function() {
-      parseResponse();
-      return removeLoading();
+    GuideFetcher.prototype.handleResponse = function() {
+      this.parseResponse();
+      return this.removeLoading();
     };
 
-    removeLoading = function() {
+    GuideFetcher.prototype.removeLoading = function() {
       return this.loading.addClass('hidden');
     };
 
-    parseResponse = function() {
+    GuideFetcher.prototype.parseResponse = function() {
       var guide, json;
 
       if (this.xhr.status === 200) {
         json = JSON.parse(this.xhr.response);
         guide = new Guide(json);
-        setupGuide(guide);
-        bindEvents();
-        return storeGuide(guide);
+        this.setupGuide(guide);
+        this.bindEvents();
+        return this.storeGuide(guide);
       } else if (this.xhr.status === 404) {
-        alert('Sorry, something went wrong');
-        return removeLoadingGuide();
+        return alert('Sorry, something went wrong');
       }
     };
 
-    removeLoadingGuide = function() {
-      var guides, loadingGuide;
-
-      guides = document.getElementById("guides");
-      loadingGuide = guides.firstChild;
-      loadingGuide.addClass('fade-out');
-      return setTimeout((function() {
-        return guides.removeChild(loadingGuide);
-      }), 1000);
+    GuideFetcher.prototype.setupGuide = function(guide) {
+      this.copyTemplateGuide();
+      return this.setGuideContent(guide);
     };
 
-    setupGuide = function(guide) {
-      copyTemplateGuide();
-      return setGuideContent(guide);
+    GuideFetcher.prototype.copyTemplateGuide = function() {
+      var newGuide;
+
+      newGuide = this.guideTemplate.outerHTML;
+      return this.guides().insertAdjacentHTML('afterbegin', newGuide);
     };
 
-    copyTemplateGuide = function() {
-      var newGuide, templateGuide;
+    GuideFetcher.prototype.setGuideContent = function(guide) {
+      var img, newGuide;
 
-      templateGuide = document.getElementById("guides").getElementsByClassName('guide template')[0];
-      newGuide = templateGuide.outerHTML;
-      return guides.insertAdjacentHTML('afterbegin', newGuide);
-    };
-
-    setGuideContent = function(guide) {
-      var attr, img, newGuideNode, _i, _len, _ref;
-
-      newGuideNode = document.getElementById("guides").getElementsByClassName('guide template')[0];
-      newGuideNode.setAttribute('data-uuid', guide.uuid);
-      _ref = ['title', 'summary', 'author'];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        attr = _ref[_i];
-        setContent(newGuideNode, attr, guide[attr]);
-      }
-      img = newGuideNode.getElementsByTagName('img')[0];
+      newGuide = this.guides().getElementsByClassName('guide template')[0];
+      newGuide.setAttribute('data-uuid', this.uuid());
+      this.setContent(newGuide, 'summary', guide.summary);
+      this.setContent(newGuide, 'title', guide.title());
+      this.setContent(newGuide, 'author', "by " + guide['author']);
+      img = newGuide.getElementsByTagName('img')[0];
       img.setAttribute('src', guide.mainImage({
         size: 'featured'
       }));
-      return newGuideNode.removeClass('template');
+      return newGuide.removeClass('template');
     };
 
-    setContent = function(node, className, text) {
+    GuideFetcher.prototype.setContent = function(node, className, text) {
       return node.getElementsByClassName(className)[0].innerText = text;
     };
 
-    bindEvents = function() {
+    GuideFetcher.prototype.bindEvents = function() {
       var startGuide;
 
       startGuide = document.getElementsByClassName('start-guide')[0];
-      return startGuide.onclick = function() {
+      return startGuide.onclick = function(e) {
         var guideViewer, uuid;
 
+        e.preventDefault();
         uuid = this.parentNode.getAttribute('data-uuid');
         guideViewer = new GuideViewer(window.guides[uuid]);
-        guideViewer.start();
-        return false;
+        return guideViewer.start();
       };
     };
 
-    storeGuide = function(guide) {
-      if (!window.guides.hasOwnProperty(uuid)) {
-        return Object.defineProperty(window.guides, guide.uuid, {
+    GuideFetcher.prototype.storeGuide = function(guide) {
+      if (!window.guides.hasOwnProperty(this.uuid())) {
+        return Object.defineProperty(window.guides, this.uuid(), {
           value: guide
         });
       }
@@ -194,11 +186,15 @@
       this.json = json;
       this.stepCount = __bind(this.stepCount, this);
       this.steps = __bind(this.steps, this);
+      this.title = __bind(this.title, this);
       this.uuid = this.json.uuid;
-      this.title = this.json.metadata.title;
       this.summary = this.json.metadata.summary;
       this.author = this.json.author.name;
     }
+
+    Guide.prototype.title = function() {
+      return "How to " + this.json.metadata.title;
+    };
 
     Guide.prototype.mainImage = function(opts) {
       return (new Image(this.json.publish_main_image_uuid)).size(opts.size);
@@ -313,6 +309,9 @@
       var roundedPercent;
 
       this.stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
+      if (this.onFirstStep()) {
+        this.stepNumber.setAttribute('style', "");
+      }
       if (this.percentDone() > 12) {
         roundedPercent = Math.round(this.percentDone());
         return this.stepNumber.setAttribute('style', "width: " + roundedPercent + "%;");

@@ -106,7 +106,13 @@ html, body {
   margin-top: 0;
 }
 
+.guide .author {
+  margin-bottom: 0;
+}
+
 .guide .summary {
+  color: #898989;
+  margin-top: 5px;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
@@ -208,12 +214,12 @@ html, body {
   bottom: 0;
   left: 0;
   width: 57px;
-  background: rgb(255, 241, 213);
+  background: #1abc9c;
   padding: 3px;
   transition: width 0.3s;
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  color: #555;
+  color: white;
 }
 
 #guide-viewer .instructions {
