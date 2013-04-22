@@ -73,7 +73,7 @@ class GuideFetcher
     for attr in ['title', 'summary', 'author']
       setContent(newGuideNode, attr, guide[attr])
     img = newGuideNode.getElementsByTagName('img')[0]
-    img.setAttribute 'src', guide.mainImage.size('featured')
+    img.setAttribute 'src', guide.mainImage size: 'featured'
     newGuideNode.classList.remove('template')
 
   setContent = (node, className, text) ->
@@ -83,8 +83,8 @@ class GuideFetcher
     startGuide = document.getElementsByClassName('start-guide')[0]
     startGuide.onclick = ->
       uuid = this.parentNode.getAttribute('data-uuid')
-      guideSlideshow = new GuideSlideshow window.guides[uuid]
-      guideSlideshow.start()
+      guideViewer = new GuideViewer window.guides[uuid]
+      guideViewer.start()
       false
 
   storeGuide = (guide) ->
@@ -94,37 +94,87 @@ class GuideFetcher
 class Image
   constructor: (@uuid) ->
 
-  size: (size) ->
+  size: (size) =>
     url = "http://images.snapguide.com/images/guide/#{@uuid}/original.jpg"
     imageSize = switch
       when size == 'thumb'    then '60x60_ac'
       when size == 'small'    then '300x294_ac'
       when size == 'medium'   then '580x296_ac'
+      when size == 'guide'   then '440x380_ac'
       when size == 'featured' then '610x340_ac'
     url.replace(/original/, imageSize)
 
 class Guide
-  constructor: (guide) ->
-    @uuid = guide.uuid
-    @title = guide.metadata.title
-    @summary = guide.metadata.summary
-    @author = guide.author.name
-    @mainImage = new Image guide.publish_main_image_uuid
+  constructor: (@json) ->
+    @uuid = @json.uuid
+    @title = @json.metadata.title
+    @summary = @json.metadata.summary
+    @author = @json.author.name
 
-class GuideSlideshow
+  mainImage: (opts) ->
+    (new Image @json.publish_main_image_uuid).size(opts.size)
+
+  image: (opts) ->
+    (new Image opts.uuid).size(opts.size)
+
+  steps: =>
+    items = @json.items.filter (e)-> ['image', 'video'].indexOf(e.type) >= 0
+    items
+
+class GuideViewer
   constructor: (@guide) ->
     @overlay = document.getElementById 'guide-overlay'
     @viewer = document.getElementById 'guide-viewer'
+    @instructions = @viewer.getElementsByClassName('instructions')[0]
+    @currentImage = @viewer.getElementsByTagName('img')[0]
+    @currentStepIndex = 0
 
-  start: ->
+  currentStep: =>
+    @guide.steps()[@currentStepIndex]
+
+  start: =>
+    @.refreshContent()
+    @.reveal()
+    @.bindEvents()
+
+  refreshContent: =>
+    uuid = @.currentStep().content.media_item_uuid
+    @instructions.innerText = @.currentStep().content.caption
+    @currentImage.setAttribute('src', @guide.image uuid: uuid, size: 'guide')
+    @.setInstructionsSize()
+
+  setInstructionsSize: =>
+    chars = @.currentStep().content.caption.length
+    if chars > 125
+      @instructions.classList.add 'chars-125'
+    else
+      @instructions.classList.remove 'chars-125'
+
+  reveal: =>
     @overlay.classList.remove 'hidden'
-    @overlay.onclick = =>
-      hideSlideShow(this)
     @viewer.classList.remove 'hidden'
 
-  hideSlideShow = (show) ->
-    show.overlay.classList.add 'hidden'
-    show.viewer.classList.add 'hidden'
+  bindEvents: =>
+    @overlay.onclick = =>
+      @.hideSlideShow()
+    previous = @viewer.getElementsByClassName('previous')[0]
+    previous.onclick = =>
+      @.previousStep()
+    next = @viewer.getElementsByClassName('next')[0]
+    next.onclick = =>
+      @.nextStep()
+
+  hideSlideShow: =>
+    @overlay.classList.add 'hidden'
+    @viewer.classList.add 'hidden'
+
+  nextStep: =>
+    @currentStepIndex += 1
+    @.refreshContent()
+
+  previousStep: =>
+    @currentStepIndex -= 1
+    @.refreshContent()
 
 window.onload = ->
   GuideFetcher.init()
