@@ -1,18 +1,17 @@
+window.onload = ->
+  GuideFetcher.init()
+
 class GuideFetcher
   constructor: ->
     @xhr = null
     @findGuide = document.getElementById("find-guide")
     @loading = @findGuide.getElementsByClassName('loading')[0]
-    @guideTemplate = @guides().getElementsByClassName('guide template')[0]
 
   @.init = ->
     (new GuideFetcher).handleSubmit()
 
   uuid: ->
     document.getElementById('guide-uuid').value
-
-  guides: ->
-    document.getElementById("guides")
 
   handleSubmit: ->
     guide_form = document.getElementById('guide-form')
@@ -54,58 +53,16 @@ class GuideFetcher
     if @xhr.status == 200
       json = JSON.parse(@xhr.response)
       guide = new Guide json
-      @.setupGuide(guide)
-      @.bindEvents()
+      view = new GuideView guide
+      view.render()
       @.storeGuide(guide)
     else if @xhr.status == 404
       response = JSON.parse(@xhr.response)
       alert response.message
 
-  setupGuide: (guide) ->
-    @.copyTemplateGuide()
-    @.setGuideContent(guide)
-
-  copyTemplateGuide: ->
-    newGuide = @guideTemplate.outerHTML
-    @guides().insertAdjacentHTML('afterbegin', newGuide)
-
-  setGuideContent: (guide) ->
-    newGuide = @guides().getElementsByClassName('guide template')[0]
-    newGuide.setAttribute 'data-uuid', @uuid()
-    @.setContent(newGuide, 'summary', guide.summary)
-    @.setContent(newGuide, 'title', guide.title())
-    @.setContent(newGuide, 'author', "by #{guide['author']}")
-    img = newGuide.getElementsByTagName('img')[0]
-    img.setAttribute 'src', guide.mainImage size: 'featured'
-    newGuide.removeClass('template')
-
-  setContent: (node, className, text) ->
-    node.getElementsByClassName(className)[0].innerText = text
-
-  bindEvents: ->
-    startGuide = document.getElementsByClassName('start-guide')[0]
-    startGuide.onclick = (e) ->
-      e.preventDefault()
-      uuid = @.parentNode.getAttribute('data-uuid')
-      guideViewer = new GuideViewer window.guides[uuid]
-      guideViewer.start()
-
   storeGuide: (guide) ->
     unless window.guides.hasOwnProperty(@uuid())
       Object.defineProperty(window.guides, @uuid(), {value: guide})
-
-class Image
-  constructor: (@uuid) ->
-
-  size: (size) =>
-    url = "http://images.snapguide.com/images/guide/#{@uuid}/original.jpg"
-    imageSize = switch
-      when size == 'thumb'    then '60x60_ac'
-      when size == 'small'    then '300x294_ac'
-      when size == 'medium'   then '580x296_ac'
-      when size == 'guide'   then '440x380_ac'
-      when size == 'featured' then '610x340_ac'
-    url.replace(/original/, imageSize)
 
 class Guide
   constructor: (@json) ->
@@ -129,17 +86,68 @@ class Guide
   stepCount: =>
     @.steps().length
 
+class Image
+  constructor: (@uuid) ->
+
+  size: (size) =>
+    url = "http://images.snapguide.com/images/guide/#{@uuid}/original.jpg"
+    imageSize = switch
+      when size == 'thumb'    then '60x60_ac'
+      when size == 'small'    then '300x294_ac'
+      when size == 'medium'   then '580x296_ac'
+      when size == 'guide'   then '440x380_ac'
+      when size == 'featured' then '610x340_ac'
+    url.replace(/original/, imageSize)
+
+class GuideView
+  constructor: (@guide) ->
+
+  guides: =>
+    document.getElementById("guides")
+
+  templateGuide: =>
+    @guides().getElementsByClassName('guide template')[0]
+
+  render: =>
+    @.copyTemplateGuide()
+    @.setGuideContent()
+    @.bindEvents()
+
+  copyTemplateGuide: =>
+    guideTemplate = @templateGuide()
+    newGuide = guideTemplate.outerHTML
+    @guides().insertAdjacentHTML('afterbegin', newGuide)
+
+  setGuideContent: =>
+    newGuide = @templateGuide()
+    newGuide.setAttribute 'data-uuid', @guide.uuid
+    @.setContent(newGuide, 'summary', @guide.summary)
+    @.setContent(newGuide, 'title', @guide.title())
+    @.setContent(newGuide, 'author', "by #{@guide.author}")
+    img = newGuide.getElementsByTagName('img')[0]
+    img.setAttribute 'src', @guide.mainImage size: 'featured'
+    newGuide.removeClass('template')
+
+  setContent: (node, className, text) =>
+    node.getElementsByClassName(className)[0].innerText = text
+
+  bindEvents: =>
+    startGuide = document.getElementsByClassName('start-guide')[0]
+    startGuide.onclick = (e) ->
+      e.preventDefault()
+      uuid = @.parentNode.getAttribute('data-uuid')
+      guideViewer = new GuideViewer window.guides[uuid]
+      guideViewer.start()
+
 class GuideViewer
   constructor: (@guide) ->
     @overlay = document.getElementById 'guide-overlay'
     @viewer = document.getElementById 'guide-viewer'
     @instructions = @viewer.getElementsByClassName('instructions')[0]
-    @currentImage = @viewer.getElementsByTagName('img')[0]
     @currentStepIndex = 0
     @lastStepIndex = @guide.stepCount() - 1
     @previous = @viewer.getElementsByClassName('previous')[0]
     @next = @viewer.getElementsByClassName('next')[0]
-    @stepNumber = @viewer.getElementsByClassName('step-no')[0]
 
   currentStep: =>
     @guide.steps()[@currentStepIndex]
@@ -152,7 +160,10 @@ class GuideViewer
   refreshContent: =>
     uuid = @.currentStep().content.media_item_uuid
     @instructions.innerText = @.currentStep().content.caption
-    @currentImage.setAttribute('src', @guide.image uuid: uuid, size: 'guide')
+
+    currentImage = @viewer.getElementsByTagName('img')[0]
+    currentImage.setAttribute('src', @guide.image uuid: uuid, size: 'guide')
+
     @.setInstructionsSize()
     @.showHideControls()
     @.updateStepNumber()
@@ -177,12 +188,13 @@ class GuideViewer
         link.removeClass 'hidden'
 
   updateStepNumber: =>
-    @stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
+    stepNumber = @viewer.getElementsByClassName('step-no')[0]
+    stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
     if @.onFirstStep()
-      @stepNumber.setAttribute('style', "")
+      stepNumber.setAttribute('style', "")
     if @.percentDone() > 12
       roundedPercent = Math.round(@.percentDone())
-      @stepNumber.setAttribute('style', "width: #{roundedPercent}%;")
+      stepNumber.setAttribute('style', "width: #{roundedPercent}%;")
 
   percentDone: =>
     (@currentStepIndex / @lastStepIndex) * 100
@@ -201,11 +213,11 @@ class GuideViewer
       e.preventDefault()
       @.nextStep()
     document.onkeyup = (e) =>
-      if e.keyCode == 27
+      if e.keyCode == 27  # escape
         @.hideSlideShow()
-      else if e.keyCode == 37
+      else if e.keyCode == 37  # left arrow
         @.previousStep()
-      else if e.keyCode == 39
+      else if e.keyCode == 39  # right arrow
         @.nextStep()
 
   hideSlideShow: =>
@@ -228,14 +240,10 @@ class GuideViewer
   onFirstStep: =>
     @currentStepIndex == 0
 
-# utilities
-Object.prototype.removeClass = (klass) ->
+Object::removeClass = (klass) ->
   if @.hasOwnProperty('classList')
     @.classList.remove klass
 
-Object.prototype.addClass = (klass) ->
+Object::addClass = (klass) ->
   if @.hasOwnProperty('classList')
     @.classList.add klass
-
-window.onload = ->
-  GuideFetcher.init()

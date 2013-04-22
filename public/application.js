@@ -1,13 +1,16 @@
 (function() {
-  var Guide, GuideFetcher, GuideViewer, Image,
+  var Guide, GuideFetcher, GuideView, GuideViewer, Image,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+  window.onload = function() {
+    return GuideFetcher.init();
+  };
 
   GuideFetcher = (function() {
     function GuideFetcher() {
       this.xhr = null;
       this.findGuide = document.getElementById("find-guide");
       this.loading = this.findGuide.getElementsByClassName('loading')[0];
-      this.guideTemplate = this.guides().getElementsByClassName('guide template')[0];
     }
 
     GuideFetcher.init = function() {
@@ -16,10 +19,6 @@
 
     GuideFetcher.prototype.uuid = function() {
       return document.getElementById('guide-uuid').value;
-    };
-
-    GuideFetcher.prototype.guides = function() {
-      return document.getElementById("guides");
     };
 
     GuideFetcher.prototype.handleSubmit = function() {
@@ -80,63 +79,18 @@
     };
 
     GuideFetcher.prototype.parseResponse = function() {
-      var guide, json, response;
+      var guide, json, response, view;
 
       if (this.xhr.status === 200) {
         json = JSON.parse(this.xhr.response);
         guide = new Guide(json);
-        this.setupGuide(guide);
-        this.bindEvents();
+        view = new GuideView(guide);
+        view.render();
         return this.storeGuide(guide);
       } else if (this.xhr.status === 404) {
         response = JSON.parse(this.xhr.response);
         return alert(response.message);
       }
-    };
-
-    GuideFetcher.prototype.setupGuide = function(guide) {
-      this.copyTemplateGuide();
-      return this.setGuideContent(guide);
-    };
-
-    GuideFetcher.prototype.copyTemplateGuide = function() {
-      var newGuide;
-
-      newGuide = this.guideTemplate.outerHTML;
-      return this.guides().insertAdjacentHTML('afterbegin', newGuide);
-    };
-
-    GuideFetcher.prototype.setGuideContent = function(guide) {
-      var img, newGuide;
-
-      newGuide = this.guides().getElementsByClassName('guide template')[0];
-      newGuide.setAttribute('data-uuid', this.uuid());
-      this.setContent(newGuide, 'summary', guide.summary);
-      this.setContent(newGuide, 'title', guide.title());
-      this.setContent(newGuide, 'author', "by " + guide['author']);
-      img = newGuide.getElementsByTagName('img')[0];
-      img.setAttribute('src', guide.mainImage({
-        size: 'featured'
-      }));
-      return newGuide.removeClass('template');
-    };
-
-    GuideFetcher.prototype.setContent = function(node, className, text) {
-      return node.getElementsByClassName(className)[0].innerText = text;
-    };
-
-    GuideFetcher.prototype.bindEvents = function() {
-      var startGuide;
-
-      startGuide = document.getElementsByClassName('start-guide')[0];
-      return startGuide.onclick = function(e) {
-        var guideViewer, uuid;
-
-        e.preventDefault();
-        uuid = this.parentNode.getAttribute('data-uuid');
-        guideViewer = new GuideViewer(window.guides[uuid]);
-        return guideViewer.start();
-      };
     };
 
     GuideFetcher.prototype.storeGuide = function(guide) {
@@ -148,37 +102,6 @@
     };
 
     return GuideFetcher;
-
-  })();
-
-  Image = (function() {
-    function Image(uuid) {
-      this.uuid = uuid;
-      this.size = __bind(this.size, this);
-    }
-
-    Image.prototype.size = function(size) {
-      var imageSize, url;
-
-      url = "http://images.snapguide.com/images/guide/" + this.uuid + "/original.jpg";
-      imageSize = (function() {
-        switch (false) {
-          case size !== 'thumb':
-            return '60x60_ac';
-          case size !== 'small':
-            return '300x294_ac';
-          case size !== 'medium':
-            return '580x296_ac';
-          case size !== 'guide':
-            return '440x380_ac';
-          case size !== 'featured':
-            return '610x340_ac';
-        }
-      })();
-      return url.replace(/original/, imageSize);
-    };
-
-    return Image;
 
   })();
 
@@ -222,6 +145,108 @@
 
   })();
 
+  Image = (function() {
+    function Image(uuid) {
+      this.uuid = uuid;
+      this.size = __bind(this.size, this);
+    }
+
+    Image.prototype.size = function(size) {
+      var imageSize, url;
+
+      url = "http://images.snapguide.com/images/guide/" + this.uuid + "/original.jpg";
+      imageSize = (function() {
+        switch (false) {
+          case size !== 'thumb':
+            return '60x60_ac';
+          case size !== 'small':
+            return '300x294_ac';
+          case size !== 'medium':
+            return '580x296_ac';
+          case size !== 'guide':
+            return '440x380_ac';
+          case size !== 'featured':
+            return '610x340_ac';
+        }
+      })();
+      return url.replace(/original/, imageSize);
+    };
+
+    return Image;
+
+  })();
+
+  GuideView = (function() {
+    function GuideView(guide) {
+      this.guide = guide;
+      this.bindEvents = __bind(this.bindEvents, this);
+      this.setContent = __bind(this.setContent, this);
+      this.setGuideContent = __bind(this.setGuideContent, this);
+      this.copyTemplateGuide = __bind(this.copyTemplateGuide, this);
+      this.render = __bind(this.render, this);
+      this.templateGuide = __bind(this.templateGuide, this);
+      this.guides = __bind(this.guides, this);
+    }
+
+    GuideView.prototype.guides = function() {
+      return document.getElementById("guides");
+    };
+
+    GuideView.prototype.templateGuide = function() {
+      return this.guides().getElementsByClassName('guide template')[0];
+    };
+
+    GuideView.prototype.render = function() {
+      this.copyTemplateGuide();
+      this.setGuideContent();
+      return this.bindEvents();
+    };
+
+    GuideView.prototype.copyTemplateGuide = function() {
+      var guideTemplate, newGuide;
+
+      guideTemplate = this.templateGuide();
+      newGuide = guideTemplate.outerHTML;
+      return this.guides().insertAdjacentHTML('afterbegin', newGuide);
+    };
+
+    GuideView.prototype.setGuideContent = function() {
+      var img, newGuide;
+
+      newGuide = this.templateGuide();
+      newGuide.setAttribute('data-uuid', this.guide.uuid);
+      this.setContent(newGuide, 'summary', this.guide.summary);
+      this.setContent(newGuide, 'title', this.guide.title());
+      this.setContent(newGuide, 'author', "by " + this.guide.author);
+      img = newGuide.getElementsByTagName('img')[0];
+      img.setAttribute('src', this.guide.mainImage({
+        size: 'featured'
+      }));
+      return newGuide.removeClass('template');
+    };
+
+    GuideView.prototype.setContent = function(node, className, text) {
+      return node.getElementsByClassName(className)[0].innerText = text;
+    };
+
+    GuideView.prototype.bindEvents = function() {
+      var startGuide;
+
+      startGuide = document.getElementsByClassName('start-guide')[0];
+      return startGuide.onclick = function(e) {
+        var guideViewer, uuid;
+
+        e.preventDefault();
+        uuid = this.parentNode.getAttribute('data-uuid');
+        guideViewer = new GuideViewer(window.guides[uuid]);
+        return guideViewer.start();
+      };
+    };
+
+    return GuideView;
+
+  })();
+
   GuideViewer = (function() {
     function GuideViewer(guide) {
       this.guide = guide;
@@ -242,12 +267,10 @@
       this.overlay = document.getElementById('guide-overlay');
       this.viewer = document.getElementById('guide-viewer');
       this.instructions = this.viewer.getElementsByClassName('instructions')[0];
-      this.currentImage = this.viewer.getElementsByTagName('img')[0];
       this.currentStepIndex = 0;
       this.lastStepIndex = this.guide.stepCount() - 1;
       this.previous = this.viewer.getElementsByClassName('previous')[0];
       this.next = this.viewer.getElementsByClassName('next')[0];
-      this.stepNumber = this.viewer.getElementsByClassName('step-no')[0];
     }
 
     GuideViewer.prototype.currentStep = function() {
@@ -261,11 +284,12 @@
     };
 
     GuideViewer.prototype.refreshContent = function() {
-      var uuid;
+      var currentImage, uuid;
 
       uuid = this.currentStep().content.media_item_uuid;
       this.instructions.innerText = this.currentStep().content.caption;
-      this.currentImage.setAttribute('src', this.guide.image({
+      currentImage = this.viewer.getElementsByTagName('img')[0];
+      currentImage.setAttribute('src', this.guide.image({
         uuid: uuid,
         size: 'guide'
       }));
@@ -307,15 +331,16 @@
     };
 
     GuideViewer.prototype.updateStepNumber = function() {
-      var roundedPercent;
+      var roundedPercent, stepNumber;
 
-      this.stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
+      stepNumber = this.viewer.getElementsByClassName('step-no')[0];
+      stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
       if (this.onFirstStep()) {
-        this.stepNumber.setAttribute('style', "");
+        stepNumber.setAttribute('style', "");
       }
       if (this.percentDone() > 12) {
         roundedPercent = Math.round(this.percentDone());
-        return this.stepNumber.setAttribute('style', "width: " + roundedPercent + "%;");
+        return stepNumber.setAttribute('style', "width: " + roundedPercent + "%;");
       }
     };
 
@@ -394,10 +419,6 @@
     if (this.hasOwnProperty('classList')) {
       return this.classList.add(klass);
     }
-  };
-
-  window.onload = function() {
-    return GuideFetcher.init();
   };
 
 }).call(this);
