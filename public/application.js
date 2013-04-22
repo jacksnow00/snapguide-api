@@ -235,6 +235,8 @@
       this.hideSlideShow = __bind(this.hideSlideShow, this);
       this.bindEvents = __bind(this.bindEvents, this);
       this.reveal = __bind(this.reveal, this);
+      this.percentDone = __bind(this.percentDone, this);
+      this.updateStepNumber = __bind(this.updateStepNumber, this);
       this.showHideControls = __bind(this.showHideControls, this);
       this.setInstructionsSize = __bind(this.setInstructionsSize, this);
       this.refreshContent = __bind(this.refreshContent, this);
@@ -272,7 +274,7 @@
       }));
       this.setInstructionsSize();
       this.showHideControls();
-      return this.stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
+      return this.updateStepNumber();
     };
 
     GuideViewer.prototype.setInstructionsSize = function() {
@@ -281,8 +283,11 @@
       chars = this.currentStep().content.caption.length;
       if (chars > 125) {
         return this.instructions.addClass('chars-125');
+      } else if (chars > 50) {
+        return this.instructions.addClass('chars-50');
       } else {
-        return this.instructions.removeClass('chars-125');
+        this.instructions.removeClass('chars-125');
+        return this.instructions.removeClass('chars-50');
       }
     };
 
@@ -304,6 +309,20 @@
       }
     };
 
+    GuideViewer.prototype.updateStepNumber = function() {
+      var roundedPercent;
+
+      this.stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
+      if (this.percentDone() > 12) {
+        roundedPercent = Math.round(this.percentDone());
+        return this.stepNumber.setAttribute('style', "width: " + roundedPercent + "%;");
+      }
+    };
+
+    GuideViewer.prototype.percentDone = function() {
+      return (this.currentStepIndex / this.lastStepIndex) * 100;
+    };
+
     GuideViewer.prototype.reveal = function() {
       this.overlay.removeClass('hidden');
       return this.viewer.removeClass('hidden');
@@ -319,9 +338,18 @@
         e.preventDefault();
         return _this.previousStep();
       };
-      return this.next.onclick = function(e) {
+      this.next.onclick = function(e) {
         e.preventDefault();
         return _this.nextStep();
+      };
+      return document.onkeyup = function(e) {
+        if (e.keyCode === 27) {
+          return _this.hideSlideShow();
+        } else if (e.keyCode === 37) {
+          return _this.previousStep();
+        } else if (e.keyCode === 39) {
+          return _this.nextStep();
+        }
       };
     };
 

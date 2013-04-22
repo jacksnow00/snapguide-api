@@ -150,14 +150,17 @@ class GuideViewer
     @currentImage.setAttribute('src', @guide.image uuid: uuid, size: 'guide')
     @.setInstructionsSize()
     @.showHideControls()
-    @stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
+    @.updateStepNumber()
 
   setInstructionsSize: =>
     chars = @.currentStep().content.caption.length
     if chars > 125
       @instructions.addClass 'chars-125'
+    else if chars > 50
+      @instructions.addClass 'chars-50'
     else
       @instructions.removeClass 'chars-125'
+      @instructions.removeClass 'chars-50'
 
   showHideControls: =>
     if @.onFirstStep()
@@ -167,6 +170,15 @@ class GuideViewer
     else
       for link in [@previous, @next]
         link.removeClass 'hidden'
+
+  updateStepNumber: =>
+    @stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
+    if @.percentDone() > 12
+      roundedPercent = Math.round(@.percentDone())
+      @stepNumber.setAttribute('style', "width: #{roundedPercent}%;")
+
+  percentDone: =>
+    (@currentStepIndex / @lastStepIndex) * 100
 
   reveal: =>
     @overlay.removeClass 'hidden'
@@ -181,6 +193,13 @@ class GuideViewer
     @next.onclick = (e) =>
       e.preventDefault()
       @.nextStep()
+    document.onkeyup = (e) =>
+      if e.keyCode == 27
+        @.hideSlideShow()
+      else if e.keyCode == 37
+        @.previousStep()
+      else if e.keyCode == 39
+        @.nextStep()
 
   hideSlideShow: =>
     @overlay.addClass 'hidden'
