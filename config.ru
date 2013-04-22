@@ -1,4 +1,4 @@
 require 'bundler'
 Bundler.require
 require './main'
-run Application
+run Sinatra::Application
