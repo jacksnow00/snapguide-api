@@ -32,14 +32,14 @@ class GuideFetcher
   showLoading = ->
     findGuide = document.getElementById("find-guide")
     @loading = findGuide.getElementsByClassName('loading')[0]
-    @loading.classList.remove 'hidden'
+    @loading.removeClass 'hidden'
 
   handleResponse = ->
     parseResponse()
     removeLoading()
 
   removeLoading = ->
-    @loading.classList.add 'hidden'
+    @loading.addClass 'hidden'
 
   parseResponse = ->
     if @xhr.status == 200
@@ -55,7 +55,7 @@ class GuideFetcher
   removeLoadingGuide = ->
     guides = document.getElementById("guides")
     loadingGuide = guides.firstChild
-    loadingGuide.classList.add('fade-out')
+    loadingGuide.addClass('fade-out')
     setTimeout (-> guides.removeChild(loadingGuide)), 1000
 
   setupGuide = (guide) ->
@@ -74,7 +74,7 @@ class GuideFetcher
       setContent(newGuideNode, attr, guide[attr])
     img = newGuideNode.getElementsByTagName('img')[0]
     img.setAttribute 'src', guide.mainImage size: 'featured'
-    newGuideNode.classList.remove('template')
+    newGuideNode.removeClass('template')
 
   setContent = (node, className, text) ->
     node.getElementsByClassName(className)[0].innerText = text
@@ -121,6 +121,9 @@ class Guide
     items = @json.items.filter (e)-> ['image', 'video'].indexOf(e.type) >= 0
     items
 
+  stepCount: =>
+    @.steps().length
+
 class GuideViewer
   constructor: (@guide) ->
     @overlay = document.getElementById 'guide-overlay'
@@ -128,6 +131,10 @@ class GuideViewer
     @instructions = @viewer.getElementsByClassName('instructions')[0]
     @currentImage = @viewer.getElementsByTagName('img')[0]
     @currentStepIndex = 0
+    @lastStepIndex = @guide.stepCount() - 1
+    @previous = @viewer.getElementsByClassName('previous')[0]
+    @next = @viewer.getElementsByClassName('next')[0]
+    @stepNumber = @viewer.getElementsByClassName('step-no')[0]
 
   currentStep: =>
     @guide.steps()[@currentStepIndex]
@@ -142,39 +149,67 @@ class GuideViewer
     @instructions.innerText = @.currentStep().content.caption
     @currentImage.setAttribute('src', @guide.image uuid: uuid, size: 'guide')
     @.setInstructionsSize()
+    @.showHideControls()
+    @stepNumber.innerText = "#{@currentStepIndex + 1} of #{@lastStepIndex + 1}"
 
   setInstructionsSize: =>
     chars = @.currentStep().content.caption.length
     if chars > 125
-      @instructions.classList.add 'chars-125'
+      @instructions.addClass 'chars-125'
     else
-      @instructions.classList.remove 'chars-125'
+      @instructions.removeClass 'chars-125'
+
+  showHideControls: =>
+    if @.onFirstStep()
+      @previous.addClass 'hidden'
+    else if @.onLastStep()
+      @next.addClass 'hidden'
+    else
+      for link in [@previous, @next]
+        link.removeClass 'hidden'
 
   reveal: =>
-    @overlay.classList.remove 'hidden'
-    @viewer.classList.remove 'hidden'
+    @overlay.removeClass 'hidden'
+    @viewer.removeClass 'hidden'
 
   bindEvents: =>
     @overlay.onclick = =>
       @.hideSlideShow()
-    previous = @viewer.getElementsByClassName('previous')[0]
-    previous.onclick = =>
+    @previous.onclick = (e) =>
+      e.preventDefault()
       @.previousStep()
-    next = @viewer.getElementsByClassName('next')[0]
-    next.onclick = =>
+    @next.onclick = (e) =>
+      e.preventDefault()
       @.nextStep()
 
   hideSlideShow: =>
-    @overlay.classList.add 'hidden'
-    @viewer.classList.add 'hidden'
+    @overlay.addClass 'hidden'
+    @viewer.addClass 'hidden'
 
   nextStep: =>
-    @currentStepIndex += 1
-    @.refreshContent()
+    unless @.onLastStep()
+      @currentStepIndex += 1
+      @.refreshContent()
+
+  onLastStep: =>
+    @currentStepIndex == @lastStepIndex
 
   previousStep: =>
-    @currentStepIndex -= 1
-    @.refreshContent()
+    unless @.onFirstStep()
+      @currentStepIndex -= 1
+      @.refreshContent()
+
+  onFirstStep: =>
+    @currentStepIndex == 0
+
+# utilities
+Object.prototype.removeClass = (klass) ->
+  if @.hasOwnProperty('classList')
+    @.classList.remove klass
+
+Object.prototype.addClass = (klass) ->
+  if @.hasOwnProperty('classList')
+    @.classList.add klass
 
 window.onload = ->
   GuideFetcher.init()

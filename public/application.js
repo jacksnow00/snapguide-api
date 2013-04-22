@@ -60,7 +60,7 @@
 
       findGuide = document.getElementById("find-guide");
       this.loading = findGuide.getElementsByClassName('loading')[0];
-      return this.loading.classList.remove('hidden');
+      return this.loading.removeClass('hidden');
     };
 
     handleResponse = function() {
@@ -69,7 +69,7 @@
     };
 
     removeLoading = function() {
-      return this.loading.classList.add('hidden');
+      return this.loading.addClass('hidden');
     };
 
     parseResponse = function() {
@@ -92,7 +92,7 @@
 
       guides = document.getElementById("guides");
       loadingGuide = guides.firstChild;
-      loadingGuide.classList.add('fade-out');
+      loadingGuide.addClass('fade-out');
       return setTimeout((function() {
         return guides.removeChild(loadingGuide);
       }), 1000);
@@ -125,7 +125,7 @@
       img.setAttribute('src', guide.mainImage({
         size: 'featured'
       }));
-      return newGuideNode.classList.remove('template');
+      return newGuideNode.removeClass('template');
     };
 
     setContent = function(node, className, text) {
@@ -192,6 +192,7 @@
   Guide = (function() {
     function Guide(json) {
       this.json = json;
+      this.stepCount = __bind(this.stepCount, this);
       this.steps = __bind(this.steps, this);
       this.uuid = this.json.uuid;
       this.title = this.json.metadata.title;
@@ -216,6 +217,10 @@
       return items;
     };
 
+    Guide.prototype.stepCount = function() {
+      return this.steps().length;
+    };
+
     return Guide;
 
   })();
@@ -223,11 +228,14 @@
   GuideViewer = (function() {
     function GuideViewer(guide) {
       this.guide = guide;
+      this.onFirstStep = __bind(this.onFirstStep, this);
       this.previousStep = __bind(this.previousStep, this);
+      this.onLastStep = __bind(this.onLastStep, this);
       this.nextStep = __bind(this.nextStep, this);
       this.hideSlideShow = __bind(this.hideSlideShow, this);
       this.bindEvents = __bind(this.bindEvents, this);
       this.reveal = __bind(this.reveal, this);
+      this.showHideControls = __bind(this.showHideControls, this);
       this.setInstructionsSize = __bind(this.setInstructionsSize, this);
       this.refreshContent = __bind(this.refreshContent, this);
       this.start = __bind(this.start, this);
@@ -237,6 +245,10 @@
       this.instructions = this.viewer.getElementsByClassName('instructions')[0];
       this.currentImage = this.viewer.getElementsByTagName('img')[0];
       this.currentStepIndex = 0;
+      this.lastStepIndex = this.guide.stepCount() - 1;
+      this.previous = this.viewer.getElementsByClassName('previous')[0];
+      this.next = this.viewer.getElementsByClassName('next')[0];
+      this.stepNumber = this.viewer.getElementsByClassName('step-no')[0];
     }
 
     GuideViewer.prototype.currentStep = function() {
@@ -258,7 +270,9 @@
         uuid: uuid,
         size: 'guide'
       }));
-      return this.setInstructionsSize();
+      this.setInstructionsSize();
+      this.showHideControls();
+      return this.stepNumber.innerText = "" + (this.currentStepIndex + 1) + " of " + (this.lastStepIndex + 1);
     };
 
     GuideViewer.prototype.setInstructionsSize = function() {
@@ -266,52 +280,93 @@
 
       chars = this.currentStep().content.caption.length;
       if (chars > 125) {
-        return this.instructions.classList.add('chars-125');
+        return this.instructions.addClass('chars-125');
       } else {
-        return this.instructions.classList.remove('chars-125');
+        return this.instructions.removeClass('chars-125');
+      }
+    };
+
+    GuideViewer.prototype.showHideControls = function() {
+      var link, _i, _len, _ref, _results;
+
+      if (this.onFirstStep()) {
+        return this.previous.addClass('hidden');
+      } else if (this.onLastStep()) {
+        return this.next.addClass('hidden');
+      } else {
+        _ref = [this.previous, this.next];
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          link = _ref[_i];
+          _results.push(link.removeClass('hidden'));
+        }
+        return _results;
       }
     };
 
     GuideViewer.prototype.reveal = function() {
-      this.overlay.classList.remove('hidden');
-      return this.viewer.classList.remove('hidden');
+      this.overlay.removeClass('hidden');
+      return this.viewer.removeClass('hidden');
     };
 
     GuideViewer.prototype.bindEvents = function() {
-      var next, previous,
-        _this = this;
+      var _this = this;
 
       this.overlay.onclick = function() {
         return _this.hideSlideShow();
       };
-      previous = this.viewer.getElementsByClassName('previous')[0];
-      previous.onclick = function() {
+      this.previous.onclick = function(e) {
+        e.preventDefault();
         return _this.previousStep();
       };
-      next = this.viewer.getElementsByClassName('next')[0];
-      return next.onclick = function() {
+      return this.next.onclick = function(e) {
+        e.preventDefault();
         return _this.nextStep();
       };
     };
 
     GuideViewer.prototype.hideSlideShow = function() {
-      this.overlay.classList.add('hidden');
-      return this.viewer.classList.add('hidden');
+      this.overlay.addClass('hidden');
+      return this.viewer.addClass('hidden');
     };
 
     GuideViewer.prototype.nextStep = function() {
-      this.currentStepIndex += 1;
-      return this.refreshContent();
+      if (!this.onLastStep()) {
+        this.currentStepIndex += 1;
+        return this.refreshContent();
+      }
+    };
+
+    GuideViewer.prototype.onLastStep = function() {
+      return this.currentStepIndex === this.lastStepIndex;
     };
 
     GuideViewer.prototype.previousStep = function() {
-      this.currentStepIndex -= 1;
-      return this.refreshContent();
+      if (!this.onFirstStep()) {
+        this.currentStepIndex -= 1;
+        return this.refreshContent();
+      }
+    };
+
+    GuideViewer.prototype.onFirstStep = function() {
+      return this.currentStepIndex === 0;
     };
 
     return GuideViewer;
 
   })();
+
+  Object.prototype.removeClass = function(klass) {
+    if (this.hasOwnProperty('classList')) {
+      return this.classList.remove(klass);
+    }
+  };
+
+  Object.prototype.addClass = function(klass) {
+    if (this.hasOwnProperty('classList')) {
+      return this.classList.add(klass);
+    }
+  };
 
   window.onload = function() {
     return GuideFetcher.init();
