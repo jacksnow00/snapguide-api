@@ -1,6 +1,5 @@
 require 'sinatra'
 require 'json'
-require_relative 'guide'
 
 class Application < Sinatra::Base
   get '/' do
