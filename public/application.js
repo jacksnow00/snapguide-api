@@ -80,7 +80,7 @@
     };
 
     GuideFetcher.prototype.parseResponse = function() {
-      var guide, json;
+      var guide, json, response;
 
       if (this.xhr.status === 200) {
         json = JSON.parse(this.xhr.response);
@@ -89,7 +89,8 @@
         this.bindEvents();
         return this.storeGuide(guide);
       } else if (this.xhr.status === 404) {
-        return alert('Sorry, something went wrong');
+        response = JSON.parse(this.xhr.response);
+        return alert(response.message);
       }
     };
 

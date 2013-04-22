@@ -58,7 +58,8 @@ class GuideFetcher
       @.bindEvents()
       @.storeGuide(guide)
     else if @xhr.status == 404
-      alert 'Sorry, something went wrong'
+      response = JSON.parse(@xhr.response)
+      alert response.message
 
   setupGuide: (guide) ->
     @.copyTemplateGuide()
