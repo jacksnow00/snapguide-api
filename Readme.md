@@ -9,4 +9,10 @@ bundler`), run the following commands:
   foreman start
 ```
 
-This project was tested with ruby 1.9.3
+Note: this project was tested with ruby 1.9.3
+
+### Run the integration tests
+
+```bash
+  bundle exec rspec spec
+```
